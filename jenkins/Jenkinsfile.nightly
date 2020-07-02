@@ -38,13 +38,9 @@ pipeline {
 
     environment {
         JENKINS_ROOT  = 'jenkins'
-        MVN_URM_MIRROR='-s jenkins/settings.xml -P mirror-apache-to-urm'
+        MVN_URM_MIRROR='-s jenkins/settings.xml -P deploy-to-sh04'
         LIBCUDF_KERNEL_CACHE_PATH='/tmp'
         URM_CREDS = credentials("svcngcc_artifactory")
-    }
-
-    triggers {
-        cron('H 5 * * *')
     }
 
     stages {
@@ -54,7 +50,7 @@ pipeline {
                 script {
                     def CUDA_NAME=sh(returnStdout: true,
                         script: '. jenkins/version-def.sh>&2 && echo -n $CUDA_CLASSIFIER | sed "s/-/./g"')
-                    def IMAGE_NAME="urm.nvidia.com/sw-spark-docker/plugin:dev-ubuntu16-$CUDA_NAME"
+                    def IMAGE_NAME="urm.nvidia.com/sw-spark-docker/plugin:dev-ubuntu16-$CUDA_NAME-gary-test"
                     def DOCKER_CMD="docker --config $WORKSPACE/.docker"
                     sh """
                         echo $URM_CREDS_PSW | $DOCKER_CMD login https://urm.nvidia.com -u $URM_CREDS_USR --password-stdin
@@ -62,8 +58,7 @@ pipeline {
                         $DOCKER_CMD logout https://urm.nvidia.com
                     """
                     docker.image(IMAGE_NAME).inside("--runtime=nvidia \
-                        -v ${HOME}/.zinc:${HOME}/.zinc:rw \
-                        -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group") {
+                        -v ${HOME}/.zinc:${HOME}/.zinc:rw") {
                         sh "jenkins/spark-nightly-build.sh"
                     }
                 }
@@ -79,9 +74,9 @@ pipeline {
                           propagate: false,
                           parameters: [string(name: 'REF', value: 'branch-0.2')])
 
-                    slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
+                 //   slack("#rapidsai-spark-cicd", "Success", color: "#33CC33")
                 } else {
-                    slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
+                  //  slack("#rapidsai-spark-cicd", "Failed", color: "#FF0000")
                 }
             }
         }
