@@ -22,7 +22,7 @@
 */
 
 pipeline {
-    agent { label 'vanilla' }
+    agent { label 'gary-node' }
 
     options {
         ansiColor('xterm')
@@ -45,7 +45,7 @@ pipeline {
 
     stages {
         stage('Ubuntu16 CUDA10.1') {
-            agent { label 'docker-gpu' }
+            agent { label 'gary-node' }
             steps {
                 script {
                     def CUDA_NAME=sh(returnStdout: true,
