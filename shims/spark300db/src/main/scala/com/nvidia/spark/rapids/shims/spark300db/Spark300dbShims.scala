@@ -23,7 +23,6 @@ import com.nvidia.spark.rapids._
 import com.nvidia.spark.rapids.shims.spark300.Spark300Shims
 import org.apache.spark.sql.rapids.shims.spark300db._
 import org.apache.hadoop.fs.Path
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkEnv
 import org.apache.spark.sql.SparkSession
@@ -33,7 +32,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.physical.BroadcastMode
 import org.apache.spark.sql.execution._
-import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, HadoopFsRelation, PartitionDirectory, PartitionedFile, InMemoryFileIndex}
+import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, HadoopFsRelation, InMemoryFileIndex, PartitionDirectory, PartitionedFile}
 import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat
 import org.apache.spark.sql.execution.exchange.{BroadcastExchangeExec, ShuffleExchangeExec}
 import org.apache.spark.sql.execution.joins.{BroadcastHashJoinExec, BroadcastNestedLoopJoinExec, HashJoin, SortMergeJoinExec}
@@ -114,12 +113,17 @@ class Spark300dbShims extends Spark300Shims with Logging {
                 sparkSession,
                 paths,
                 options,
-                Option(wrapped.relation.dataSchema)
+                Option(wrapped.relation.dataSchema),
+                NoopCache,
+                wrapped.relation.location.partitionSchema,
+                wrapped.relation.location.metadataOpsTimeNs
               )
             } else {
               logInfo("Gary-Alluxio-paths: no change")
               wrapped.relation.location
             }
+            slogInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.treeString)
+            logInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.partitionColumns.names.mkString(","))
             logInfo("Gary-Alluxio: " + location.inputFiles.mkString(","))
             logInfo("Gary-Alluxio: " + location.getClass.getCanonicalName)
             logInfo("Gary-Alluxio: " + wrapped.relation.partitionSchema.treeString)
