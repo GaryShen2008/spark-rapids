@@ -122,8 +122,7 @@ class Spark300dbShims extends Spark300Shims with Logging {
               logInfo("Gary-Alluxio-paths: no change")
               wrapped.relation.location
             }
-            slogInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.treeString)
-            logInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.partitionColumns.names.mkString(","))
+            logInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.treeString)
             logInfo("Gary-Alluxio: " + location.inputFiles.mkString(","))
             logInfo("Gary-Alluxio: " + location.getClass.getCanonicalName)
             logInfo("Gary-Alluxio: " + wrapped.relation.partitionSchema.treeString)
