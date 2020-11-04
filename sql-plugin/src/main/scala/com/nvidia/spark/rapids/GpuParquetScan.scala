@@ -386,6 +386,8 @@ case class GpuParquetMultiFilePartitionReaderFactory(
   private def buildBaseColumnarParquetReaderForCloud(
       files: Array[PartitionedFile],
       conf: Configuration): PartitionReader[ColumnarBatch] = {
+    logInfo("Gary-Alluxio GpuParquetScan: " + files.mkString(","))
+    logInfo("Gary-Alluxio GpuParquetScan: " + conf.toString())
     new MultiFileCloudParquetPartitionReader(conf, files,
       isCaseSensitive, readDataSchema, debugDumpPrefix,
       maxReadBatchSizeRows, maxReadBatchSizeBytes, metrics, partitionSchema,
