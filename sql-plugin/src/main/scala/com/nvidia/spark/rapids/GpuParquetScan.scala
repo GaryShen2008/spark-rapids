@@ -392,8 +392,17 @@ case class GpuParquetMultiFilePartitionReaderFactory(
     val new_files = if (alluxioEnabled) {
       logInfo("Gary-Alluxio GpuParquetScan: use alluxio")
       files.map(pf => {
-        pf.filePath.replaceFirst("s3:/", "alluxio://" + alluxioIPPort)
-        pf
+        logInfo("Gary-Alluio GpuParquetScan location: " + pf.locations.mkString(","))
+        PartitionedFile(pf.partitionValues,
+          pf.filePath.replaceFirst("s3:/", "alluxio://" + alluxioIPPort),
+          pf.start,
+          pf.length,
+          if (pf.locations) {
+            pf.locations.map( str => str.replaceFirst("s3:/", "alluxio://" + alluxioIPPort))
+          } else pf.locations
+        )
+
+
       })
     } else {
       files
