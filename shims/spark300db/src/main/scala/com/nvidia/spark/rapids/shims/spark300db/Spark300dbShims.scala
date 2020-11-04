@@ -109,14 +109,15 @@ class Spark300dbShims extends Spark300Shims with Logging {
               val paths = wrapped.relation.location.inputFiles.map(str =>
                 new Path(str.replaceFirst("s3:/", "alluxio://" + conf.alluxioIPPort))).toSeq
               logInfo("Gary-Alluxio-paths: " + paths.mkString(","))
+              val partitionDirectory = wrapped.relation.location.listFiles(Nil, Nil)
+              for (dir <- partitionDirectory) {
+                logInfo("Gary-Alluxio partitionDir: " + dir.toString())
+              }
               new InMemoryFileIndex(
                 sparkSession,
                 paths,
                 options,
                 Option(wrapped.relation.dataSchema),
-                NoopCache,
-                wrapped.relation.location.partitionSchema,
-                wrapped.relation.location.metadataOpsTimeNs
               )
             } else {
               logInfo("Gary-Alluxio-paths: no change")
