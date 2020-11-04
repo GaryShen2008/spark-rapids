@@ -397,7 +397,7 @@ case class GpuParquetMultiFilePartitionReaderFactory(
           pf.filePath.replaceFirst("s3:/", "alluxio://" + alluxioIPPort),
           pf.start,
           pf.length,
-          if (pf.locations) {
+          if (pf.locations== null) {
             pf.locations.map( str => str.replaceFirst("s3:/", "alluxio://" + alluxioIPPort))
           } else pf.locations
         )
