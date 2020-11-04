@@ -102,7 +102,7 @@ class Spark300dbShims extends Spark300Shims with Logging {
           override def convertToGpu(): GpuExec = {
             val sparkSession = wrapped.relation.sparkSession
             val options = wrapped.relation.options
-            val location = if (conf.alluxioEnabled
+            val location = if (false
               && wrapped.relation.location.getClass.getCanonicalName() ==
               "com.databricks.sql.transaction.tahoe.stats.PreparedDeltaFileIndex") {
               // Need to change the IP address of Alluxio
