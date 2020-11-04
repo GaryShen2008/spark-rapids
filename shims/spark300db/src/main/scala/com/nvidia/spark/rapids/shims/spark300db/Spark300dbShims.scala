@@ -113,11 +113,13 @@ class Spark300dbShims extends Spark300Shims with Logging {
               for (dir <- partitionDirectory) {
                 logInfo("Gary-Alluxio partitionDir: " + dir.toString())
               }
+              logInfo("Gary-Alluxio-rootpath: " +wrapped.relation.location.rootPaths.mkString(","))
               new InMemoryFileIndex(
                 sparkSession,
                 paths,
                 options,
                 Option(wrapped.relation.dataSchema),
+
               )
             } else {
               logInfo("Gary-Alluxio-paths: no change")
