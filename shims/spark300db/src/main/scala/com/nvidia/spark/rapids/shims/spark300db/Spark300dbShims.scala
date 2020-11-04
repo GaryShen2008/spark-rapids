@@ -232,4 +232,18 @@ class Spark300dbShims extends Spark300Shims with Logging {
       queryUsesInputFile: Boolean): GpuFileSourceScanExec = {
     scanExec.copy(queryUsesInputFile=queryUsesInputFile)
   }
+
+  override def alluxioReplace(files: Array[PartitionedFile], alluxioIp: String):Array[PartitionedFile] = {
+    files.map(pf => {
+      logInfo("Gary-Alluio alluxioReplace location: " + pf.locations().mkString(","))
+      new PartitionedFile(pf.partitionValues(),
+        pf.filePath.replaceFirst("s3:/", "alluxio://" + alluxioIp),
+        pf.start,
+        pf.length,
+        pf.locations().map(str => str.replaceFirst("s3:/", "alluxio://" + alluxioIp)),
+        pf.modificationTime
+      )
+    })
+  }
+
 }
