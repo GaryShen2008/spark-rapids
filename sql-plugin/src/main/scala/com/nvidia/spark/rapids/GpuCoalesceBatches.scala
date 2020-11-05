@@ -277,11 +277,11 @@ abstract class AbstractGpuCoalesceIterator(
         numRows += batch.numRows()
         columnSizes = getColumnSizes(batch)
         numBytes += columnSizes.sum
-        logInfo("Gary-Alluxio numRows: " + numRows);
+        /*logInfo("Gary-Alluxio numRows: " + numRows);
         logInfo("Gary-Alluxio: " + stringFieldIndices.size);
         logInfo("Gary-Alluxio stringField: " + stringFieldIndices.mkString(","))
         logInfo("Gary-Alluxio columnSizes: " + columnSizes.mkString(","))
-        logInfo("Gary-Alluxio schema: " + schema.treeString)
+        logInfo("Gary-Alluxio schema: " + schema.treeString)*/
         stringColumnSizes = stringFieldIndices.map(i => getColumnDataSize(batch, i, columnSizes(i)))
             .zip(stringColumnSizes)
             .map(pair => pair._1 + pair._2)
@@ -564,7 +564,6 @@ class GpuCoalesceIterator(iter: Iterator[ColumnarBatch],
 
   override def getColumnSizes(cb: ColumnarBatch): Array[Long] = {
     if (!GpuCompressedColumnVector.isBatchCompressed(cb)) {
-      logInfo("Gary-Alluxio getColumnSizes goes no compressed path")
       GpuColumnVector.extractBases(cb).map(_.getDeviceMemorySize)
     } else {
       GpuCompressedColumnVector.getUncompressedColumnSizes(cb)

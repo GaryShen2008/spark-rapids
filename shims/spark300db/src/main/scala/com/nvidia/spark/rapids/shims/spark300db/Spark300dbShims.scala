@@ -235,7 +235,11 @@ class Spark300dbShims extends Spark300Shims with Logging {
 
   override def alluxioReplace(files: Array[PartitionedFile], alluxioIp: String):Array[PartitionedFile] = {
     files.map(pf => {
-      logInfo("Gary-Alluio alluxioReplace location: " + if (pf.locations == null) "Null" else pf.locations.mkString(","))
+      if (pf.locations == null) {
+        logInfo("Gary-Alluio alluxioReplace location: NULL")
+      } else {
+        logInfo("Gary-Alluio alluxioReplace location: " + pf.locations.mkString(","))
+      }
       new PartitionedFile(pf.partitionValues,
         pf.filePath.replaceFirst("s3:/", "alluxio://" + alluxioIp),
         pf.start,

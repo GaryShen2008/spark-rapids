@@ -25,7 +25,8 @@ import ai.rapids.cudf.{ColumnVector, DType, Scalar}
 import org.apache.spark.sql.catalyst.analysis.TypeCheckResult
 import org.apache.spark.sql.catalyst.expressions.{Cast, CastBase, Expression, NullIntolerant, TimeZoneAwareExpression}
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.
+import org.apache.spark.internal.Logging
 
 /** Meta-data for cast and ansi_cast. */
 class CastExprMeta[INPUT <: CastBase](
@@ -192,7 +193,7 @@ case class GpuCast(
     dataType: DataType,
     ansiMode: Boolean = false,
     timeZoneId: Option[String] = None)
-  extends GpuUnaryExpression with TimeZoneAwareExpression with NullIntolerant {
+  extends GpuUnaryExpression with TimeZoneAwareExpression with NullIntolerant with Logging {
 
   import GpuCast._
 
@@ -459,8 +460,10 @@ case class GpuCast(
       case (ShortType | IntegerType | LongType | ByteType | StringType, BinaryType) =>
         new GpuColumnVector(BinaryType, input.getBase.asByteList(true))
 
-      case _ =>
+      case _ => {
+        logInfo("Gary-Alluxio GpuCast: " + GpuColumnVector.getRapidsType(dataType))
         GpuColumnVector.from(input.getBase.castTo(GpuColumnVector.getRapidsType(dataType)))
+      }
     }
   }
 
