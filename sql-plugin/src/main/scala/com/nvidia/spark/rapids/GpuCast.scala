@@ -461,7 +461,8 @@ case class GpuCast(
         new GpuColumnVector(BinaryType, input.getBase.asByteList(true))
 
       case _ => {
-        logInfo("Gary-Alluxio GpuCast: " + GpuColumnVector.getRapidsType(dataType))
+        logInfo("Gary-Alluxio GpuCast: " + GpuColumnVector.getRapidsType(dataType)
+          + " Column: " + input.getBase.toString)
         GpuColumnVector.from(input.getBase.castTo(GpuColumnVector.getRapidsType(dataType)))
       }
     }
