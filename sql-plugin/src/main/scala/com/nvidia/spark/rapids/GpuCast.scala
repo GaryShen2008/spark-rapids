@@ -462,7 +462,7 @@ case class GpuCast(
 
       case _ => {
         logInfo("Gary-Alluxio GpuCast: " + GpuColumnVector.getRapidsType(dataType)
-          + " Column: " + input.getBase.toString)
+          + " Column: " + input.getBase.toString + " input Type: " + input.dataType())
         GpuColumnVector.from(input.getBase.castTo(GpuColumnVector.getRapidsType(dataType)))
       }
     }
