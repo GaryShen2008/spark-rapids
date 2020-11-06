@@ -118,7 +118,7 @@ class Spark300dbShims extends Spark300Shims with Logging {
               // test code to generate PartitionSpec
               // need to do as below
               // 1. partitionPaths = paths.map
-              val partitionPaths = paths.map(str => str.substring(0, str.lastIndexOf('/')))
+              val partitionPaths = paths.map(path => path.getParent())
               logInfo("Gary-Alluxio partitionPaths: " + partitionPaths.mkString(","))
 
               val fileIndex = new InMemoryFileIndex(
