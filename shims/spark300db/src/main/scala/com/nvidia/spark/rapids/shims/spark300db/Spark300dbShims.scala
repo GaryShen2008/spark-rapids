@@ -23,7 +23,6 @@ import com.nvidia.spark.rapids._
 import com.nvidia.spark.rapids.shims.spark300.Spark300Shims
 import org.apache.spark.sql.rapids.shims.spark300db._
 import org.apache.hadoop.fs.Path
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkEnv
 import org.apache.spark.sql.SparkSession
@@ -33,7 +32,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.physical.BroadcastMode
 import org.apache.spark.sql.execution._
-import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, HadoopFsRelation, PartitionDirectory, PartitionedFile}
+import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, HadoopFsRelation, InMemoryFileIndex, PartitionDirectory, PartitionedFile}
 import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat
 import org.apache.spark.sql.execution.exchange.{BroadcastExchangeExec, ShuffleExchangeExec}
 import org.apache.spark.sql.execution.joins.{BroadcastHashJoinExec, BroadcastNestedLoopJoinExec, HashJoin, SortMergeJoinExec}
@@ -42,8 +41,9 @@ import org.apache.spark.sql.rapids.{GpuFileSourceScanExec, GpuTimeSub}
 import org.apache.spark.sql.rapids.execution.{GpuBroadcastExchangeExecBase, GpuBroadcastMeta, GpuBroadcastNestedLoopJoinExecBase, GpuShuffleExchangeExecBase, GpuShuffleMeta}
 import org.apache.spark.sql.types._
 import org.apache.spark.storage.{BlockId, BlockManagerId}
+import org.apache.spark.internal.Logging
 
-class Spark300dbShims extends Spark300Shims {
+class Spark300dbShims extends Spark300Shims with Logging {
 
   override def getSparkShimVersion: ShimVersion = SparkShimServiceProvider.VERSION
 
@@ -102,8 +102,38 @@ class Spark300dbShims extends Spark300Shims {
           override def convertToGpu(): GpuExec = {
             val sparkSession = wrapped.relation.sparkSession
             val options = wrapped.relation.options
+            val location = if (conf.alluxioEnabled
+              && wrapped.relation.location.getClass.getCanonicalName() ==
+              "com.databricks.sql.transaction.tahoe.stats.PreparedDeltaFileIndex") {
+              // Need to change the IP address of Alluxio
+              val paths = wrapped.relation.location.inputFiles.map(str =>
+                new Path(str.replaceFirst("s3:/", "alluxio://" + conf.alluxioIPPort))).toSeq
+              logInfo("Gary-Alluxio-paths: " + paths.mkString(","))
+              val partitionDirectory = wrapped.relation.location.listFiles(Nil, Nil)
+              for (dir <- partitionDirectory) {
+                logInfo("Gary-Alluxio partitionDir: " + dir.toString())
+              }
+              logInfo("Gary-Alluxio-rootpath: " +wrapped.relation.location.rootPaths.mkString(","))
+              new InMemoryFileIndex(
+                sparkSession,
+                paths,
+                options,
+                Option(wrapped.relation.dataSchema)
+              )
+            } else {
+              logInfo("Gary-Alluxio-paths: no change")
+              wrapped.relation.location
+            }
+            logInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.treeString)
+            logInfo("Gary-Alluxio: " + location.inputFiles.mkString(","))
+            logInfo("Gary-Alluxio: " + location.getClass.getCanonicalName)
+            logInfo("Gary-Alluxio: " + wrapped.relation.partitionSchema.treeString)
+            logInfo("Gary-Alluxio: " + wrapped.relation.dataSchema.treeString)
+            logInfo("Gary-Alluxio: " + wrapped.relation.bucketSpec.toString())
+            logInfo("Gary-Alluxio: " + wrapped.relation.fileFormat.toString())
+            logInfo("Gary-Alluxio: " + options.toString())
             val newRelation = HadoopFsRelation(
-              wrapped.relation.location,
+              location,
               wrapped.relation.partitionSchema,
               wrapped.relation.dataSchema,
               wrapped.relation.bucketSpec,
