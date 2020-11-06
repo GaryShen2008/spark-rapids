@@ -114,16 +114,26 @@ class Spark300dbShims extends Spark300Shims with Logging {
                 logInfo("Gary-Alluxio partitionDir: " + dir.toString())
               }
               logInfo("Gary-Alluxio-rootpath: " +wrapped.relation.location.rootPaths.mkString(","))
-              new InMemoryFileIndex(
+
+              // test code to generate PartitionSpec
+              // need to do as below
+              // 1. partitionPaths = paths.map
+              val partitionPaths = paths.map(str => str.substring(0, str.lastIndexOf('/')))
+              logInfo("Gary-Alluxio partitionPaths: " + partitionPaths.mkString(","))
+
+              val fileIndex = new InMemoryFileIndex(
                 sparkSession,
                 paths,
                 options,
                 Option(wrapped.relation.dataSchema)
               )
+              logInfo("Gary-Alluxio partitionSpec: " + fileIndex.partitionSpec())
+              fileIndex
             } else {
               logInfo("Gary-Alluxio-paths: no change")
               wrapped.relation.location
             }
+
             logInfo("Gary-Alluxio: " + wrapped.relation.location.partitionSchema.treeString)
             logInfo("Gary-Alluxio: " + location.inputFiles.mkString(","))
             logInfo("Gary-Alluxio: " + location.getClass.getCanonicalName)
