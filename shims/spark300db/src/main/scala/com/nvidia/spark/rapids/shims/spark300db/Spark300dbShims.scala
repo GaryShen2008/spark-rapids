@@ -121,6 +121,8 @@ class Spark300dbShims extends Spark300Shims with Logging {
               val partitionPaths = paths.map(path => path.getParent())
               logInfo("Gary-Alluxio partitionPaths: " + partitionPaths.mkString(","))
 
+              options.foreach(x => logInfo("Gary-Alluxio options: " + x._1 + " = " + x._2))
+
               val fileIndex = new InMemoryFileIndex(
                 sparkSession,
                 paths,
