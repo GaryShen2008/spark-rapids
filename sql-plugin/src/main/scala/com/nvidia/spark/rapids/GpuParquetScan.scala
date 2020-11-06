@@ -388,15 +388,7 @@ case class GpuParquetMultiFilePartitionReaderFactory(
   private def buildBaseColumnarParquetReaderForCloud(
       files: Array[PartitionedFile],
       conf: Configuration): PartitionReader[ColumnarBatch] = {
-    logInfo("Gary-Alluxio GpuParquetScan: " + conf.toString())
-    val new_files = if (alluxioEnabled) {
-      logInfo("Gary-Alluxio GpuParquetScan: use alluxio")
-      ShimLoader.getSparkShims.alluxioReplace(files, alluxioIPPort)
-    } else {
-      files
-    }
-    logInfo("Gary-Alluxio GpuParquetScan: " + new_files.mkString(","))
-    new MultiFileCloudParquetPartitionReader(conf, new_files,
+    new MultiFileCloudParquetPartitionReader(conf, files,
       isCaseSensitive, readDataSchema, debugDumpPrefix,
       maxReadBatchSizeRows, maxReadBatchSizeBytes, metrics, partitionSchema,
       numThreads, maxNumFileProcessed, filterHandler, filters)
