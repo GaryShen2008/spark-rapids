@@ -16,7 +16,6 @@
 
 package org.apache.spark.sql.rapids.execution.python
 
-import ai.rapids.cudf
 import com.nvidia.spark.rapids._
 import com.nvidia.spark.rapids.python.PythonWorkerSemaphore
 import com.nvidia.spark.rapids.shims.ShimUnaryExecNode
@@ -117,20 +116,20 @@ case class GpuMapInPandasExec(
 
       val pyInputIterator = new RebatchingRoundoffIterator(contextAwareIter, pyInputTypes,
           batchSize, mNumInputRows, mNumInputBatches, spillCallback)
-        .map { batch =>
-          // Here we wrap it via another column so that Python sides understand it
-          // as a DataFrame.
-          withResource(batch) { b =>
-            val structColumn = cudf.ColumnVector.makeStruct(GpuColumnVector.extractBases(b): _*)
-            withResource(structColumn) { stColumn =>
-              val gpuColumn = GpuColumnVector.from(stColumn.incRefCount(), pyInputTypes)
-              new ColumnarBatch(Array(gpuColumn), b.numRows())
-            }
-          }
-      }
+//        .map { batch =>
+//          // Here we wrap it via another column so that Python sides understand it
+//          // as a DataFrame.
+//          withResource(batch) { b =>
+//            val structColumn = cudf.ColumnVector.makeStruct(GpuColumnVector.extractBases(b): _*)
+//            withResource(structColumn) { stColumn =>
+//              val gpuColumn = GpuColumnVector.from(stColumn.incRefCount(), pyInputTypes)
+//              new ColumnarBatch(Array(gpuColumn), b.numRows())
+//            }
+//          }
+//      }
 
       if (pyInputIterator.hasNext) {
-        val pyRunner = new GpuArrowPythonRunner(
+        val pyRunner = new GpuArrowCudaIcEvalPythonExec(
           chainedFunc,
           PythonEvalType.SQL_MAP_PANDAS_ITER_UDF,
           argOffsets,

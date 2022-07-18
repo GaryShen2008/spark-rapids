@@ -18,8 +18,8 @@ package org.apache.spark.sql.rapids.execution.python
 import java.io.DataOutputStream
 import java.net.Socket
 
-import ai.rapids.cudf.{ArrowIPCWriterOptions, NvtxColor, NvtxRange, Table}
-import com.nvidia.spark.rapids.{CudfColumn, GpuColumnVector, GpuMetric, GpuSemaphore}
+import ai.rapids.cudf.Table
+import com.nvidia.spark.rapids.{CudfColumn, GpuColumnVector, GpuMetric}
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowStreamWriter
 
@@ -28,8 +28,7 @@ import org.apache.spark.api.python.{ChainedPythonFunctions, PythonRDD}
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.execution.arrow.ArrowWriter
 import org.apache.spark.sql.execution.python.PythonUDFRunner
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.sql.vectorized.ColumnarBatch
 import org.apache.spark.util.Utils
@@ -53,11 +52,11 @@ class GpuArrowCudaIcEvalPythonExec(
     timeZoneId, conf, batchSize, semWait, onDataWriteFinished,
     pythonOutSchema, minReadTargetBatchSize) {
 
-  override val bufferSize: Int = SQLConf.get.pandasUDFBufferSize
-  require(
-    bufferSize >= 4,
-    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
-      s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
+//  override val bufferSize: Int = 65536
+//  require(
+//    bufferSize >= 4,
+//    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
+//      s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
 
   protected override def newWriterThread(
     env: SparkEnv,
@@ -89,9 +88,12 @@ class GpuArrowCudaIcEvalPythonExec(
 
       protected override def writeIteratorToStream(dataOut: DataOutputStream): Unit = {
         // create schema with all string types
-        val structFields = pythonInSchema.fieldNames.map(name => {
-          StructField(name, StringType, nullable = true)
-        })
+        val structFields = pythonInSchema.fields(0).dataType match {
+          case StructType(x) =>
+            x.map(f => StructField(f.name, StringType, f.nullable))
+          case _ => throw new RuntimeException("not supported")
+        }
+
         val fixSchema = StructType(structFields)
         val arrowSchema = ArrowUtils.toArrowSchema(fixSchema, timeZoneId)
         val allocator = ArrowUtils.rootAllocator.newChildAllocator(
@@ -133,16 +135,6 @@ class GpuArrowCudaIcEvalPythonExec(
           allocator.close()
         }
       }
-
-      private def flattenNames(d: DataType, nullable: Boolean = true): Seq[(String, Boolean)] =
-        d match {
-          case s: StructType =>
-            s.flatMap(sf => Seq((sf.name, sf.nullable)) ++ flattenNames(sf.dataType, sf.nullable))
-          case m: MapType =>
-            flattenNames(m.keyType, nullable) ++ flattenNames(m.valueType, nullable)
-          case a: ArrayType => flattenNames(a.elementType, nullable)
-          case _ => Nil
-        }
     }
   }
 
