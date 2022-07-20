@@ -251,6 +251,11 @@ object AlluxioUtils extends Logging {
       partitionFilters: Seq[Expression],
       dataFilters: Seq[Expression]): FileIndex = {
 
+    logInfo("relation.partitionSchema: " + relation.partitionSchema.catalogString())
+    logInfo("relation.dataSchema: " + relation.dataSchema.catalogString())
+    logInfo("relation.bucketSpec: " +
+      { if (relation.bucketSpec.isDefined) { relation.bucketSpec.get.toString() } else { "None" } })
+
     val alluxioPathsReplace: Option[Seq[String]] = conf.getAlluxioPathsToReplace
     val alluxioAutoMountEnabled = conf.getAlluxioAutoMountEnabled
     val alluxioBucketRegex: String = conf.getAlluxioBucketRegex
