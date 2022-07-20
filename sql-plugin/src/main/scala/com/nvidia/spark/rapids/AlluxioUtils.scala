@@ -251,10 +251,10 @@ object AlluxioUtils extends Logging {
       partitionFilters: Seq[Expression],
       dataFilters: Seq[Expression]): FileIndex = {
 
-    logInfo("relation.partitionSchema: " + relation.partitionSchema.catalogString())
-    logInfo("relation.dataSchema: " + relation.dataSchema.catalogString())
-    logInfo("relation.bucketSpec: " +
-      { if (relation.bucketSpec.isDefined) { relation.bucketSpec.get.toString() } else { "None" } })
+    logInfo("relation.partitionSchema: " + relation.partitionSchema.catalogString)
+    logInfo("relation.dataSchema: " + relation.dataSchema.catalogString)
+    logInfo("relation.bucketSpec: ".+(
+       if (relation.bucketSpec.isDefined) { relation.bucketSpec.get.toString() } else { "None" } ))
 
     val alluxioPathsReplace: Option[Seq[String]] = conf.getAlluxioPathsToReplace
     val alluxioAutoMountEnabled = conf.getAlluxioAutoMountEnabled
@@ -291,7 +291,7 @@ object AlluxioUtils extends Logging {
         rootPaths,
         inputFiles,
         parameters,
-        Option(relation.dataSchema),
+        None,
         replaceFunc.get)
 
       // generate a new InMemoryFileIndex holding paths with alluxio schema
