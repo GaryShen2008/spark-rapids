@@ -299,7 +299,7 @@ object AlluxioUtils extends Logging {
         relation.sparkSession,
         inputFiles,
         parameters,
-        Option(relation.dataSchema),
+        None,
         userSpecifiedPartitionSpec = Some(partitionSpec))
     } else {
       relation.location
