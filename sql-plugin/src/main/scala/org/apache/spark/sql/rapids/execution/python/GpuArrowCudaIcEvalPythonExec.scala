@@ -25,6 +25,7 @@ import org.apache.arrow.vector.ipc.ArrowStreamWriter
 
 import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.api.python.{ChainedPythonFunctions, PythonRDD}
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.execution.arrow.ArrowWriter
 import org.apache.spark.sql.execution.python.PythonUDFRunner
@@ -90,9 +91,10 @@ class GpuArrowCudaIcEvalPythonExec(
       protected override def writeIteratorToStream(dataOut: DataOutputStream): Unit = {
         // create schema with all string types
         // TODO, we don't support nested types
-        val stringSchema = StructType(pythonInSchema.map(f =>
-          StructField(f.name, StringType, f.nullable)))
-
+        val stringSchema = StructType(
+          StructField("in_struct", StructType(
+            pythonInSchema.map(f => StructField(f.name, StringType, f.nullable)))
+          ) :: Nil)
         val arrowSchema = ArrowUtils.toArrowSchema(stringSchema, timeZoneId)
         val allocator = ArrowUtils.rootAllocator.newChildAllocator(
           s"stdout writer for $pythonExec", 0, Long.MaxValue)
@@ -111,7 +113,7 @@ class GpuArrowCudaIcEvalPythonExec(
             val finalIpcs: Array[Any] = columnIpcInfo.map(col =>
               UTF8String.fromString(col.toString))
             val genericInternalRow = new GenericInternalRow(finalIpcs)
-            arrowWriter.write(genericInternalRow)
+            arrowWriter.write(InternalRow(genericInternalRow))
             arrowWriter.finish()
             writer.writeBatch()
             arrowWriter.reset()
