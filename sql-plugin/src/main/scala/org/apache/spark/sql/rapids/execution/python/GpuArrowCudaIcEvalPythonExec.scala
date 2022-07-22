@@ -28,7 +28,7 @@ import org.apache.spark.api.python.{ChainedPythonFunctions, PythonRDD}
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.execution.arrow.ArrowWriter
 import org.apache.spark.sql.execution.python.PythonUDFRunner
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.sql.vectorized.ColumnarBatch
 import org.apache.spark.unsafe.types.UTF8String
@@ -89,14 +89,11 @@ class GpuArrowCudaIcEvalPythonExec(
 
       protected override def writeIteratorToStream(dataOut: DataOutputStream): Unit = {
         // create schema with all string types
-        val structFields = pythonInSchema.fields(0).dataType match {
-          case StructType(x) =>
-            x.map(f => StructField(f.name, StringType, f.nullable))
-          case _ => throw new RuntimeException("not supported")
-        }
+        // TODO, we don't support nested types
+        val stringSchema = StructType(pythonInSchema.map(f =>
+          StructField(f.name, StringType, f.nullable)))
 
-        val fixSchema = StructType(structFields)
-        val arrowSchema = ArrowUtils.toArrowSchema(fixSchema, timeZoneId)
+        val arrowSchema = ArrowUtils.toArrowSchema(stringSchema, timeZoneId)
         val allocator = ArrowUtils.rootAllocator.newChildAllocator(
           s"stdout writer for $pythonExec", 0, Long.MaxValue)
         val root = VectorSchemaRoot.create(arrowSchema, allocator)
