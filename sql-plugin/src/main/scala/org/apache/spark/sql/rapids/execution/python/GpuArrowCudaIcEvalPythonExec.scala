@@ -31,6 +31,7 @@ import org.apache.spark.sql.execution.python.PythonUDFRunner
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.sql.vectorized.ColumnarBatch
+import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.Utils
 
 /**
@@ -110,7 +111,9 @@ class GpuArrowCudaIcEvalPythonExec(
               GpuColumnVector.from(nextBatch)
             }
             val columnIpcInfo: Array[Any] = getTableIpcInfo(table)
-            val genericInternalRow = new GenericInternalRow(columnIpcInfo)
+            val finalIpcs: Array[Any] = columnIpcInfo.map(col =>
+              UTF8String.fromString(col.toString))
+            val genericInternalRow = new GenericInternalRow(finalIpcs)
             arrowWriter.write(genericInternalRow)
             arrowWriter.finish()
             writer.writeBatch()
