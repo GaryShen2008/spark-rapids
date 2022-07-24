@@ -15,10 +15,10 @@
  */
 package org.apache.spark.sql.rapids.execution.python
 
-import java.io.DataOutputStream
+import java.io.{DataOutputStream, File}
 import java.net.Socket
 
-import ai.rapids.cudf.Table
+import ai.rapids.cudf.{ColumnVector, Table}
 import com.nvidia.spark.rapids.{CudfColumn, GpuColumnVector, GpuMetric}
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowStreamWriter
@@ -39,26 +39,26 @@ import org.apache.spark.util.Utils
  * Similar to `PythonUDFRunner`, but exchange data with Python worker via Arrow stream.
  */
 class GpuArrowCudaIcEvalPythonExec(
-    funcs: Seq[ChainedPythonFunctions],
-    evalType: Int,
-    argOffsets: Array[Array[Int]],
-    pythonInSchema: StructType,
-    timeZoneId: String,
-    conf: Map[String, String],
-    batchSize: Long,
-    semWait: GpuMetric,
-    onDataWriteFinished: () => Unit,
-    pythonOutSchema: StructType,
-    minReadTargetBatchSize: Int = 1)
+  funcs: Seq[ChainedPythonFunctions],
+  evalType: Int,
+  argOffsets: Array[Array[Int]],
+  pythonInSchema: StructType,
+  timeZoneId: String,
+  conf: Map[String, String],
+  batchSize: Long,
+  semWait: GpuMetric,
+  onDataWriteFinished: () => Unit,
+  pythonOutSchema: StructType,
+  minReadTargetBatchSize: Int = 1)
   extends GpuArrowPythonRunner(funcs, evalType, argOffsets, pythonInSchema,
     timeZoneId, conf, batchSize, semWait, onDataWriteFinished,
     pythonOutSchema, minReadTargetBatchSize) {
 
-//  override val bufferSize: Int = 65536
-//  require(
-//    bufferSize >= 4,
-//    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
-//      s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
+  //  override val bufferSize: Int = 65536
+  //  require(
+  //    bufferSize >= 4,
+  //    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
+  //      s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
 
   protected override def newWriterThread(
     env: SparkEnv,
@@ -106,9 +106,18 @@ class GpuArrowCudaIcEvalPythonExec(
           writer.start()
 
           while (inputIterator.hasNext) {
-            val table = withResource(inputIterator.next()) { nextBatch =>
-              GpuColumnVector.from(nextBatch)
+
+            val file = new File("/tmp/cuda_ipc_info")
+            val table = if (file.exists()) {
+              val cv1 = ColumnVector.fromInts(11, 32, 3, 4, 5, 6)
+              val cv2 = ColumnVector.fromInts(1, 3, 6, 7, 9, 2)
+              new Table(Array(cv1, cv2): _*)
+            } else {
+              withResource(inputIterator.next()) { nextBatch =>
+                GpuColumnVector.from(nextBatch)
+              }
             }
+
             val columnIpcInfo: Array[Any] = getTableIpcInfo(table)
             val finalIpcs: Array[Any] = columnIpcInfo.map(col =>
               UTF8String.fromString(col.toString))

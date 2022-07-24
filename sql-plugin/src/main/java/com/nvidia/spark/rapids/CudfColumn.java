@@ -16,10 +16,6 @@
 
 package com.nvidia.spark.rapids;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Base64;
 
 import com.nvidia.spark.rapids.jni.CudaIPC;
@@ -141,36 +137,9 @@ public class CudfColumn {
   /** build the base information of a column */
   private String buildMetaObject(long ptr, long shape, final String typeStr) {
 
-    String cudaIpcInfo = "";
+    byte[] bytes = CudaIPC.getCudaIpcMemHandle(ptr);
+    String cudaIpcInfo = Base64.getEncoder().encodeToString(bytes);
 
-    File file = new File("/tmp/cuda_ipc_info.txt");
-    if (file.exists()) {
-      BufferedReader reader;
-      try {
-        reader = new BufferedReader(new FileReader(
-            "/tmp/ipc_handle_encoded.txt"));
-        cudaIpcInfo = reader.readLine();
-        System.out.println(cudaIpcInfo);
-        byte[] x = Base64.getDecoder().decode(cudaIpcInfo);
-        for (int i = 0; i < x.length; i++) {
-          System.out.print(x[i] + " ");
-        }
-        System.out.println();
-        reader.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      System.out.println("Done reading from ipc_handle_encoded ----");
-    } else {
-      byte[] bytes = CudaIPC.getCudaIpcMemHandle(ptr);
-      cudaIpcInfo = Base64.getEncoder().encodeToString(bytes);
-      for (int i = 0; i < bytes.length; i++) {
-        System.out.print(bytes[i] + " ");
-      }
-      System.out.println("Done to get the cuda ipc handle");
-    }
-
-    System.out.println("cudaIpcInfo: " + cudaIpcInfo + " ptr:" + String.format("0x%08x", ptr));
     StringBuilder builder = new StringBuilder();
     builder.append("\"shape\":[" + shape + "],");
     builder.append("\"data\":[\"" + cudaIpcInfo + "\"," + "false" + "],");
