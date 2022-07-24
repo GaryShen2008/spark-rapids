@@ -111,6 +111,7 @@ class GpuArrowCudaIcEvalPythonExec(
             val table = if (file.exists()) {
               val cv1 = ColumnVector.fromInts(11, 32, 3, 4, 5, 6)
               val cv2 = ColumnVector.fromInts(1, 3, 6, 7, 9, 2)
+              inputIterator.next()
               new Table(Array(cv1, cv2): _*)
             } else {
               withResource(inputIterator.next()) { nextBatch =>
