@@ -24,6 +24,7 @@ import ai.rapids.cudf.BaseDeviceMemoryBuffer;
 import ai.rapids.cudf.BufferType;
 import ai.rapids.cudf.ColumnVector;
 import ai.rapids.cudf.DType;
+import ai.rapids.cudf.HostColumnVector;
 
 /**
  * This class is composing of base data with Apache Arrow format from Cudf ColumnVector.
@@ -41,6 +42,7 @@ public class CudfColumn {
   private String arrayInterface = null; // the cuda array interface
 
   public static CudfColumn from(ColumnVector cv) {
+    System.out.println("CudfColumn: " + cv);
     BaseDeviceMemoryBuffer dataBuffer = cv.getDeviceBufferFor(BufferType.DATA);
     BaseDeviceMemoryBuffer validBuffer = cv.getDeviceBufferFor(BufferType.VALIDITY);
     long validPtr = 0;

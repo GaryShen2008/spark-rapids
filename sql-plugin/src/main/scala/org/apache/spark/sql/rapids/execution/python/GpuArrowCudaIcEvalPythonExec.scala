@@ -18,7 +18,7 @@ package org.apache.spark.sql.rapids.execution.python
 import java.io.{DataOutputStream, File}
 import java.net.Socket
 
-import ai.rapids.cudf.{ColumnVector, Table}
+import ai.rapids.cudf.{ColumnVector, Cuda, Table}
 import com.nvidia.spark.rapids.{CudfColumn, GpuColumnVector, GpuMetric}
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowStreamWriter
@@ -115,7 +115,16 @@ class GpuArrowCudaIcEvalPythonExec(
               new Table(Array(cv1, cv2): _*)
             } else {
               withResource(inputIterator.next()) { nextBatch =>
-                GpuColumnVector.from(nextBatch)
+                val columns = GpuColumnVector.extractBases(nextBatch)
+                columns.foreach(cv => cv.incRefCount())
+                val table = new Table(columns: _*)
+                val cv = table.getColumn(0)
+                val hostCv = cv.copyToHost()
+                println(s"xxx = ${hostCv.getInt(0)} ${hostCv.getInt(1)} ${hostCv.getInt(2)}")
+                val cv1 = table.getColumn(1)
+                val hostCv1 = cv1.copyToHost()
+                println(s"xxx = ${hostCv1.getInt(0)} ${hostCv1.getInt(1)} ${hostCv1.getInt(2)}")
+                table
               }
             }
 
