@@ -15,10 +15,10 @@
  */
 package org.apache.spark.sql.rapids.execution.python
 
-import java.io.{DataOutputStream, File}
+import java.io.{DataOutputStream}
 import java.net.Socket
 
-import ai.rapids.cudf.{ColumnVector, Cuda, Table}
+import ai.rapids.cudf.{Table}
 import com.nvidia.spark.rapids.{CudfColumn, GpuColumnVector, GpuMetric}
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowStreamWriter
@@ -106,26 +106,20 @@ class GpuArrowCudaIcEvalPythonExec(
           writer.start()
 
           while (inputIterator.hasNext) {
-
-            val file = new File("/tmp/cuda_ipc_info")
-            val table = if (file.exists()) {
-              val cv1 = ColumnVector.fromInts(11, 32, 3, 4, 5, 6)
-              val cv2 = ColumnVector.fromInts(1, 3, 6, 7, 9, 2)
-              inputIterator.next()
-              new Table(Array(cv1, cv2): _*)
-            } else {
-              withResource(inputIterator.next()) { nextBatch =>
-                val columns = GpuColumnVector.extractBases(nextBatch)
-                columns.foreach(cv => cv.incRefCount())
-                val table = new Table(columns: _*)
-                val cv = table.getColumn(0)
-                val hostCv = cv.copyToHost()
-                println(s"xxx = ${hostCv.getInt(0)} ${hostCv.getInt(1)} ${hostCv.getInt(2)}")
-                val cv1 = table.getColumn(1)
-                val hostCv1 = cv1.copyToHost()
-                println(s"xxx = ${hostCv1.getInt(0)} ${hostCv1.getInt(1)} ${hostCv1.getInt(2)}")
-                table
-              }
+            val table = withResource(inputIterator.next()) { nextBatch =>
+              val table = GpuColumnVector.from(nextBatch)
+              val cv = table.getColumn(0)
+//              CudaIPC.checkGpuMemory(
+//                cv.getDeviceBufferFor(BufferType.DATA).getAddress, table.getRowCount.toInt)
+              val hostCv = cv.copyToHost()
+              println(s"xxx = ${hostCv.getInt(0)} ${hostCv.getInt(1)} ${hostCv.getInt(2)}")
+              val cv1 = table.getColumn(1)
+              val hostCv1 = cv1.copyToHost()
+//              CudaIPC.checkGpuMemory(
+//                cv1.getDeviceBufferFor(BufferType.DATA).getAddress, table.getRowCount.toInt)
+              println(s"xxx = ${hostCv1.getInt(0)} ${hostCv1.getInt(1)} ${hostCv1.getInt(2)}")
+//              CudaIPC.cudaDeviceSynchronize()
+              table
             }
 
             val columnIpcInfo: Array[Any] = getTableIpcInfo(table)

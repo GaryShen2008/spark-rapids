@@ -30,6 +30,16 @@ object PythonConfEntries {
     .booleanConf
     .createWithDefault(false)
 
+  val PYTHON_ARROW_ZERO_COPY_REBATCHING_ENABLED = conf(
+    "spark.rapids.sql.python.arrow.zerocopy.rebatching.enabled")
+    .doc("This is an experimental feature and is likely to change in the future." +
+      " Enable (true) or disable (false) support for data zero copy from java process to " +
+      "python process. When enabled, The RAPIDs accelerator just copy the meta of the data to " +
+      "python process in the row of pandas DataFrame, and when disabled, The RAPIDS accelerator " +
+      "will copy the whole data to the python")
+    .booleanConf
+    .createWithDefault(false)
+
   val PYTHON_GPU_ENABLED = conf("spark.rapids.sql.python.gpu.enabled")
     .doc("This is an experimental feature and is likely to change in the future." +
       " Enable (true) or disable (false) support for scheduling Python Pandas UDFs with" +

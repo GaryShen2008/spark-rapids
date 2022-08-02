@@ -81,6 +81,10 @@ object GpuPythonHelper extends Logging {
     new RapidsConf(sqlConf).get(PYTHON_ARROW_ZERO_COPY_ENABLED)
   }
 
+  def isArrowZeroCopyRebatchingEnabled(sqlConf: SQLConf): Boolean = {
+    new RapidsConf(sqlConf).get(PYTHON_ARROW_ZERO_COPY_REBATCHING_ENABLED)
+  }
+
   def isPythonOnGpuEnabled(sqlConf: SQLConf, name: String = "spark"): Boolean = {
     val pythonEnabled = new RapidsConf(sqlConf).get(PYTHON_GPU_ENABLED)
     if (pythonEnabled) {

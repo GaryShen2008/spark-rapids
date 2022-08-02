@@ -92,6 +92,7 @@ case class GpuMapInPandasExec(
     val pythonRunnerConf = ArrowUtils.getPythonRunnerConfMap(conf)
 
     lazy val isArrowZeroCopyEnabled = GpuPythonHelper.isArrowZeroCopyEnabled(conf)
+    lazy val rebatching = GpuPythonHelper.isArrowZeroCopyRebatchingEnabled(conf)
 
     // Start process
     child.executeColumnar().mapPartitionsInternal { inputIter =>
@@ -121,8 +122,10 @@ case class GpuMapInPandasExec(
         StructField("out_struct", StructType.fromAttributes(output)) :: Nil)
 
       val (pyInputIterator, pyRunner) = if (isArrowZeroCopyEnabled) {
+        val itr = if (rebatching) rebatchingIterator else contextAwareIter
+
         val pyInputSchema = pyInputTypes
-        (rebatchingIterator, new GpuArrowCudaIcEvalPythonExec(
+        (itr, new GpuArrowCudaIcEvalPythonExec(
           chainedFunc,
           PythonEvalType.SQL_MAP_PANDAS_ITER_UDF,
           argOffsets,
