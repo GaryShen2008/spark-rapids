@@ -30,7 +30,23 @@ rm -rf $ARTF_ROOT && mkdir -p $ARTF_ROOT
 
 # TODO remove -Dtransitive=false workaround once pom is fixed
 cd $ARTF_ROOT
-RAPIDS_TEST_JAR_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-22.10.0-20220907.163757-355-${SHUFFLE_SPARK_SHIM}.jar"
+SPECIFIC_VER=""
+if [[ $SHUFFLE_SPARK_SHIM == "spark312"]]; then
+  SPECIFIC_VER="22.10.0-20220907.141148-351"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark311"]]; then
+  SPECIFIC_VER="22.10.0-220220907.190841-359"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark313"]]; then
+  SPECIFIC_VER="22.10.0-20220907.144854-352"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark320"]]; then
+  SPECIFIC_VER="22.10.0-20220907.160219-354"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark321"]]; then
+  SPECIFIC_VER="22.10.0-20220907.163757-355"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark322"]]; then
+  SPECIFIC_VER="22.10.0-20220907.171301-356"
+elif [[ $SHUFFLE_SPARK_SHIM == "spark330"]]; then
+  SPECIFIC_VER="22.10.0-20220907.174913-357"
+fi
+RAPIDS_TEST_JAR_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-${SPECIFIC_VER}-${SHUFFLE_SPARK_SHIM}.jar"
 wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_TEST_JAR_NAME}"
 RAPIDS_TEST_JAR="$ARTF_ROOT/$RAPIDS_TEST_JAR_NAME"
 
@@ -45,9 +61,9 @@ if [[ "${INCLUDE_SPARK_AVRO_JAR}" == "true" ]]; then
 fi
 
 # TODO remove -Dtransitive=false workaround once pom is fixed
-RAPIDS_INT_TESTS_TGZ_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-22.10.0-20220907.163757-355-pytest.tar.gz"
+RAPIDS_INT_TESTS_TGZ_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-${SPECIFIC_VER}-pytest.tar.gz"
 wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_INT_TESTS_TGZ_NAME}"
-
+cd -
 
 RAPIDS_INT_TESTS_HOME="$ARTF_ROOT/integration_tests/"
 # The version of pytest.tar.gz that is uploaded is the one built against spark311 but its being pushed without classifier for now
