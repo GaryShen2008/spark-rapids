@@ -29,19 +29,14 @@ MVN_GET_CMD="mvn -Dmaven.wagon.http.retryHandler.count=3 org.apache.maven.plugin
 rm -rf $ARTF_ROOT && mkdir -p $ARTF_ROOT
 
 # TODO remove -Dtransitive=false workaround once pom is fixed
-$MVN_GET_CMD -DremoteRepositories=$PROJECT_TEST_REPO \
-    -Dtransitive=false \
-    -DgroupId=com.nvidia -DartifactId=rapids-4-spark-integration-tests_$SCALA_BINARY_VER -Dversion=$PROJECT_TEST_VER -Dclassifier=$SHUFFLE_SPARK_SHIM
-if [ "$CUDA_CLASSIFIER"x == x ];then
-    $MVN_GET_CMD -DremoteRepositories=$PROJECT_REPO \
-        -DgroupId=com.nvidia -DartifactId=rapids-4-spark_$SCALA_BINARY_VER -Dversion=$PROJECT_VER
-    export RAPIDS_PLUGIN_JAR="$ARTF_ROOT/rapids-4-spark_${SCALA_BINARY_VER}-$PROJECT_VER.jar"
-else
-    $MVN_GET_CMD -DremoteRepositories=$PROJECT_REPO \
-        -DgroupId=com.nvidia -DartifactId=rapids-4-spark_$SCALA_BINARY_VER -Dversion=$PROJECT_VER -Dclassifier=$CUDA_CLASSIFIER
-    export RAPIDS_PLUGIN_JAR="$ARTF_ROOT/rapids-4-spark_${SCALA_BINARY_VER}-$PROJECT_VER-${CUDA_CLASSIFIER}.jar"
-fi
-RAPIDS_TEST_JAR="$ARTF_ROOT/rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-$PROJECT_TEST_VER-$SHUFFLE_SPARK_SHIM.jar"
+cd $ARTF_ROOT
+RAPIDS_TEST_JAR_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-22.10.0-20220907.163757-355-${SHUFFLE_SPARK_SHIM}.jar"
+wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_TEST_JAR_NAME}"
+RAPIDS_TEST_JAR="$ARTF_ROOT/$RAPIDS_TEST_JAR_NAME"
+
+RAPIDS_PLUGIN_JAR_NAME="rapids-4-spark_${SCALA_BINARY_VER}-22.10.0-20220907.190056-26-${CUDA_CLASSIFIER}.jar"
+wget -q "${URM_URL}/com/nvidia/rapids-4-spark_2.12/22.10.0-SNAPSHOT/${RAPIDS_PLUGIN_JAR_NAME}"
+export RAPIDS_PLUGIN_JAR="$ARTF_ROOT/$RAPIDS_PLUGIN_JAR_NAME"
 
 export INCLUDE_SPARK_AVRO_JAR=${INCLUDE_SPARK_AVRO_JAR:-"true"}
 if [[ "${INCLUDE_SPARK_AVRO_JAR}" == "true" ]]; then
@@ -50,13 +45,13 @@ if [[ "${INCLUDE_SPARK_AVRO_JAR}" == "true" ]]; then
 fi
 
 # TODO remove -Dtransitive=false workaround once pom is fixed
-$MVN_GET_CMD -DremoteRepositories=$PROJECT_TEST_REPO \
-    -Dtransitive=false \
-    -DgroupId=com.nvidia -DartifactId=rapids-4-spark-integration-tests_$SCALA_BINARY_VER -Dversion=$PROJECT_TEST_VER -Dclassifier=pytest -Dpackaging=tar.gz
+RAPIDS_INT_TESTS_TGZ_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-22.10.0-20220907.163757-355-pytest.tar.gz"
+wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_INT_TESTS_TGZ_NAME}"
+
 
 RAPIDS_INT_TESTS_HOME="$ARTF_ROOT/integration_tests/"
 # The version of pytest.tar.gz that is uploaded is the one built against spark311 but its being pushed without classifier for now
-RAPIDS_INT_TESTS_TGZ="$ARTF_ROOT/rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-$PROJECT_TEST_VER-pytest.tar.gz"
+RAPIDS_INT_TESTS_TGZ="$ARTF_ROOT/${RAPIDS_INT_TESTS_TGZ_NAME}"
 
 tmp_info=${TMP_INFO_FILE:-'/tmp/artifacts-build.info'}
 rm -rf "$tmp_info"
