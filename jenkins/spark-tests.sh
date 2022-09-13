@@ -54,16 +54,18 @@ RAPIDS_PLUGIN_JAR_NAME="rapids-4-spark_${SCALA_BINARY_VER}-22.10.0-20220907.1900
 wget -q "${URM_URL}/com/nvidia/rapids-4-spark_2.12/22.10.0-SNAPSHOT/${RAPIDS_PLUGIN_JAR_NAME}"
 export RAPIDS_PLUGIN_JAR="$ARTF_ROOT/$RAPIDS_PLUGIN_JAR_NAME"
 
+# TODO remove -Dtransitive=false workaround once pom is fixed
+RAPIDS_INT_TESTS_TGZ_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-${SPECIFIC_VER}-pytest.tar.gz"
+wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_INT_TESTS_TGZ_NAME}"
+cd -
+
 export INCLUDE_SPARK_AVRO_JAR=${INCLUDE_SPARK_AVRO_JAR:-"true"}
 if [[ "${INCLUDE_SPARK_AVRO_JAR}" == "true" ]]; then
   $MVN_GET_CMD -DremoteRepositories=$PROJECT_REPO \
       -DgroupId=org.apache.spark -DartifactId=spark-avro_$SCALA_BINARY_VER -Dversion=$SPARK_VER
 fi
 
-# TODO remove -Dtransitive=false workaround once pom is fixed
-RAPIDS_INT_TESTS_TGZ_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-${SPECIFIC_VER}-pytest.tar.gz"
-wget -q "${URM_URL}/com/nvidia/rapids-4-spark-integration-tests_2.12/22.10.0-SNAPSHOT/${RAPIDS_INT_TESTS_TGZ_NAME}"
-cd -
+
 
 RAPIDS_INT_TESTS_HOME="$ARTF_ROOT/integration_tests/"
 # The version of pytest.tar.gz that is uploaded is the one built against spark311 but its being pushed without classifier for now
