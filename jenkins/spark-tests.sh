@@ -31,19 +31,19 @@ rm -rf $ARTF_ROOT && mkdir -p $ARTF_ROOT
 # TODO remove -Dtransitive=false workaround once pom is fixed
 cd $ARTF_ROOT
 SPECIFIC_VER=""
-if [[ $SHUFFLE_SPARK_SHIM == "spark312"]]; then
+if [[ "$SHUFFLE_SPARK_SHIM" == "spark312" ]]; then
   SPECIFIC_VER="22.10.0-20220907.141148-351"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark311"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark311" ]]; then
   SPECIFIC_VER="22.10.0-220220907.190841-359"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark313"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark313" ]]; then
   SPECIFIC_VER="22.10.0-20220907.144854-352"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark320"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark320" ]]; then
   SPECIFIC_VER="22.10.0-20220907.160219-354"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark321"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark321" ]]; then
   SPECIFIC_VER="22.10.0-20220907.163757-355"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark322"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark322" ]]; then
   SPECIFIC_VER="22.10.0-20220907.171301-356"
-elif [[ $SHUFFLE_SPARK_SHIM == "spark330"]]; then
+elif [[ $SHUFFLE_SPARK_SHIM == "spark330" ]]; then
   SPECIFIC_VER="22.10.0-20220907.174913-357"
 fi
 RAPIDS_TEST_JAR_NAME="rapids-4-spark-integration-tests_${SCALA_BINARY_VER}-${SPECIFIC_VER}-${SHUFFLE_SPARK_SHIM}.jar"
