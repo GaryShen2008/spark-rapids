@@ -582,13 +582,6 @@ object RapidsConf {
     .booleanConf
     .createWithDefault(true)
 
-  val HAS_NANS = conf("spark.rapids.sql.hasNans")
-    .doc("Config to indicate if your data has NaN's. Cudf doesn't " +
-      "currently support NaN's properly so you can get corrupt data if you have NaN's in your " +
-      "data and it runs on the GPU.")
-    .booleanConf
-    .createWithDefault(true)
-
   val NEED_DECIMAL_OVERFLOW_GUARANTEES = conf("spark.rapids.sql.decimalOverflowGuarantees")
       .doc("FOR TESTING ONLY. DO NOT USE IN PRODUCTION. Please see the decimal section of " +
           "the compatibility documents for more information on this config.")
@@ -1479,14 +1472,6 @@ object RapidsConf {
     .booleanConf
     .createWithDefault(true)
 
-  val FORCE_SHIMCALLER_CLASSLOADER = conf("spark.rapids.force.caller.classloader")
-    .doc("Option to statically add shim's parallel world classloader URLs to " +
-      "the classloader of the ShimLoader class, typically Bootstrap classloader. This option" +
-      " uses reflection with setAccessible true on a classloader that is not created by Spark.")
-    .internal()
-    .booleanConf
-    .createWithDefault(value = true)
-
   val SPARK_GPU_RESOURCE_NAME = conf("spark.rapids.gpu.resourceName")
     .doc("The name of the Spark resource that represents a GPU that you want the plugin to use " +
       "if using custom resources with Spark.")
@@ -1544,7 +1529,7 @@ object RapidsConf {
         |On startup use: `--conf [conf key]=[conf value]`. For example:
         |
         |```
-        |$SPARK_HOME/bin/spark-shell --jars rapids-4-spark_2.12-22.08.0-SNAPSHOT-cuda11.jar \
+        |$SPARK_HOME/bin/spark-shell --jars rapids-4-spark_2.12-22.10.0-SNAPSHOT-cuda11.jar \
         |--conf spark.plugins=com.nvidia.spark.SQLPlugin \
         |--conf spark.rapids.sql.concurrentGpuTasks=2
         |```
@@ -1723,8 +1708,6 @@ class RapidsConf(conf: Map[String, String]) extends Logging {
   lazy val isGdsSpillEnabled: Boolean = get(GDS_SPILL)
 
   lazy val gdsSpillBatchWriteBufferSize: Long = get(GDS_SPILL_BATCH_WRITE_BUFFER_SIZE)
-
-  lazy val hasNans: Boolean = get(HAS_NANS)
 
   lazy val needDecimalGuarantees: Boolean = get(NEED_DECIMAL_OVERFLOW_GUARANTEES)
 
