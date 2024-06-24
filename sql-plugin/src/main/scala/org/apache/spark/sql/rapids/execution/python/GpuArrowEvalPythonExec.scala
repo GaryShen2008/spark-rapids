@@ -41,7 +41,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.python.PythonUDFRunner
-import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.sql.vectorized.ColumnarBatch
@@ -368,11 +367,11 @@ class GpuArrowPythonRunner(
     extends ShimBasePythonRunner[ColumnarBatch, ColumnarBatch](funcs, evalType, argOffsets)
         with GpuPythonArrowOutput {
 
-  override val bufferSize: Int = SQLConf.get.pandasUDFBufferSize
-  require(
-    bufferSize >= 4,
-    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
-        s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
+//  override val bufferSize: Int = 65536
+//  require(
+//    bufferSize >= 4,
+//    "Pandas execution requires more than 4 bytes. Please set higher buffer. " +
+//        s"Please change '${SQLConf.PANDAS_UDF_BUFFER_SIZE.key}'.")
 
   protected override def newWriterThread(
       env: SparkEnv,

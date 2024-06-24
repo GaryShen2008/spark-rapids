@@ -91,15 +91,15 @@ case class GpuMapInPandasExec(
     val sessionLocalTimeZone = conf.sessionLocalTimeZone
     val pythonRunnerConf = ArrowUtils.getPythonRunnerConfMap(conf)
 
+    lazy val isArrowZeroCopyEnabled = GpuPythonHelper.isArrowZeroCopyEnabled(conf)
+    lazy val rebatching = GpuPythonHelper.isArrowZeroCopyRebatchingEnabled(conf)
+
     // Start process
     child.executeColumnar().mapPartitionsInternal { inputIter =>
       val context = TaskContext.get()
 
       // Single function with one struct.
       val argOffsets = Array(Array(0))
-      val pyInputSchema = StructType(StructField("in_struct", pyInputTypes) :: Nil)
-      val pythonOutputSchema = StructType(StructField("out_struct",
-        StructType.fromAttributes(output)) :: Nil)
 
       if (isPythonOnGpuEnabled) {
         GpuPythonHelper.injectGpuInfo(chainedFunc, isPythonOnGpuEnabled)
@@ -115,22 +115,17 @@ case class GpuMapInPandasExec(
         override def next(): ColumnarBatch = inputIter.next()
       }
 
-      val pyInputIterator = new RebatchingRoundoffIterator(contextAwareIter, pyInputTypes,
-          batchSize, mNumInputRows, mNumInputBatches, spillCallback)
-        .map { batch =>
-          // Here we wrap it via another column so that Python sides understand it
-          // as a DataFrame.
-          withResource(batch) { b =>
-            val structColumn = cudf.ColumnVector.makeStruct(GpuColumnVector.extractBases(b): _*)
-            withResource(structColumn) { stColumn =>
-              val gpuColumn = GpuColumnVector.from(stColumn.incRefCount(), pyInputTypes)
-              new ColumnarBatch(Array(gpuColumn), b.numRows())
-            }
-          }
-      }
+      val rebatchingIterator = new RebatchingRoundoffIterator(contextAwareIter, pyInputTypes,
+        batchSize, mNumInputRows, mNumInputBatches, spillCallback)
 
-      if (pyInputIterator.hasNext) {
-        val pyRunner = new GpuArrowPythonRunner(
+      val pythonOutputSchema = StructType(
+        StructField("out_struct", StructType.fromAttributes(output)) :: Nil)
+
+      val (pyInputIterator, pyRunner) = if (isArrowZeroCopyEnabled) {
+        val itr = if (rebatching) rebatchingIterator else contextAwareIter
+
+        val pyInputSchema = pyInputTypes
+        (itr, new GpuArrowCudaIcEvalPythonExec(
           chainedFunc,
           PythonEvalType.SQL_MAP_PANDAS_ITER_UDF,
           argOffsets,
@@ -146,8 +141,40 @@ case class GpuMapInPandasExec(
           // and columns.
           // Then try to read as many as possible by specifying `minReadTargetBatchSize` as
           // `Int.MaxValue` here.
-          Int.MaxValue)
+          Int.MaxValue))
+      } else {
+        val pyInputSchema = StructType(StructField("in_struct", pyInputTypes) :: Nil)
+        val iter = rebatchingIterator.map { batch =>
+          // Here we wrap it via another column so that Python sides understand it
+          // as a DataFrame.
+          withResource(batch) { b =>
+            val structColumn = cudf.ColumnVector.makeStruct(GpuColumnVector.extractBases(b): _*)
+            withResource(structColumn) { stColumn =>
+              val gpuColumn = GpuColumnVector.from(stColumn.incRefCount(), pyInputTypes)
+              new ColumnarBatch(Array(gpuColumn), b.numRows())
+            }
+          }
+        }
+        (iter, new GpuArrowPythonRunner(
+          chainedFunc,
+          PythonEvalType.SQL_MAP_PANDAS_ITER_UDF,
+          argOffsets,
+          pyInputSchema,
+          sessionLocalTimeZone,
+          pythonRunnerConf,
+          batchSize,
+          spillCallback.semaphoreWaitTime,
+          onDataWriteFinished = null,
+          pythonOutputSchema,
+          // We can not assert the result batch from Python has the same row number with the
+          // input batch. Because Map Pandas UDF allows the output of arbitrary length
+          // and columns.
+          // Then try to read as many as possible by specifying `minReadTargetBatchSize` as
+          // `Int.MaxValue` here.
+          Int.MaxValue))
+      }
 
+      if (pyInputIterator.hasNext) {
         executePython(pyInputIterator, output, pyRunner, mNumOutputRows, mNumOutputBatches)
       } else {
         // Empty partition, return it directly
