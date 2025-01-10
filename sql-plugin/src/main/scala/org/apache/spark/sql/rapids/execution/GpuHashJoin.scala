@@ -21,7 +21,7 @@ import com.nvidia.spark.rapids._
 import com.nvidia.spark.rapids.Arm.{closeOnExcept, withResource}
 import com.nvidia.spark.rapids.RapidsPluginImplicits.AutoCloseableProducingSeq
 import com.nvidia.spark.rapids.RmmRapidsRetryIterator.{withRestoreOnRetry, withRetryNoSplit}
-import com.nvidia.spark.rapids.jni.GpuOOM
+import com.nvidia.spark.rapids.jni.{BucketChainHashJoin, GpuOOM}
 import com.nvidia.spark.rapids.shims.ShimBinaryExecNode
 
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Expression, NamedExpression}
@@ -470,6 +470,7 @@ class HashJoinIterator(
       rightData: LazySpillableColumnarBatch): Option[JoinGatherer] = {
     withResource(new NvtxWithMetrics("hash join gather map", NvtxColor.ORANGE, joinTime)) { _ =>
       // hack to work around unique_join not handling empty tables
+      print("here to debug")
       if (joinType.isInstanceOf[InnerLike] &&
         (leftKeys.getRowCount == 0 || rightKeys.getRowCount == 0)) {
         None
@@ -486,11 +487,30 @@ class HashJoinIterator(
             rightKeys.leftJoinGatherMaps(leftKeys, compareNullsEqual).reverse
           case _: InnerLike if buildStats.isDistinct =>
             if (buildSide == GpuBuildRight) {
-              leftKeys.innerDistinctJoinGatherMaps(rightKeys, compareNullsEqual)
+              if(leftKeys.getNumberOfColumns == 1 && rightKeys.getNumberOfColumns == 1
+                && leftKeys.getColumn(0).getType == DType.INT32 && rightKeys.getColumn(0).getType == DType.INT32 ){
+                print("call to my new kernel1\n")
+                BucketChainHashJoin.innerJoinGatherMaps(leftKeys, rightKeys, compareNullsEqual)
+              } else {
+                print("buildSide != GpuBuildRight. wrong \n")
+                print("leftKeys.getNumberOfColumns " + leftKeys.getNumberOfColumns + "\n")
+                print("rightKeys.getNumberOfColumns " + rightKeys.getNumberOfColumns + "\n")
+                print("rightKeys.getColumn(0).getType " + leftKeys.getColumn(0).getType + "\n")
+                print("rightKeys.getColumn(0).getType " + rightKeys.getColumn(0).getType + "\n")
+                leftKeys.innerDistinctJoinGatherMaps(rightKeys, compareNullsEqual)
+              }
             } else {
-              rightKeys.innerDistinctJoinGatherMaps(leftKeys, compareNullsEqual).reverse
+              print("buildSide == GpuBuildRight. wrong")
+              BucketChainHashJoin.innerJoinGatherMaps(rightKeys, leftKeys, compareNullsEqual).reverse
             }
-          case _: InnerLike => leftKeys.innerJoinGatherMaps(rightKeys, compareNullsEqual)
+          case _: InnerLike =>
+            if(leftKeys.getNumberOfColumns == 1 && rightKeys.getNumberOfColumns == 1
+            && leftKeys.getColumn(0).getType == DType.INT32 && rightKeys.getColumn(0).getType == DType.INT32 ){
+              print("call to my new kernel2\n")
+              BucketChainHashJoin.innerJoinGatherMaps(leftKeys, rightKeys, compareNullsEqual)
+            } else {
+              leftKeys.innerJoinGatherMaps(rightKeys, compareNullsEqual)
+            }
           case LeftSemi => Array(leftKeys.leftSemiJoinGatherMap(rightKeys, compareNullsEqual))
           case LeftAnti => Array(leftKeys.leftAntiJoinGatherMap(rightKeys, compareNullsEqual))
           case _ =>
