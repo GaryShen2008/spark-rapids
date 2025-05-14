@@ -19,10 +19,8 @@
 spark-rapids-shim-json-lines ***/
 package org.apache.spark.sql.rapids.suites
 
-import org.apache.spark.sql.{DateFunctionSuite}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.rapids.utils.RapidsSQLTestsTrait
-import org.apache.spark.sql.types._
 
 class RapidsDateFunctionSuite extends DateFunctionSuite with RapidsSQLTestsTrait {
   
