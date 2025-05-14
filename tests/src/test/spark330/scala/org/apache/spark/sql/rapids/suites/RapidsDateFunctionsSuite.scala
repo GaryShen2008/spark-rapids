@@ -22,6 +22,6 @@ package org.apache.spark.sql.rapids.suites
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.rapids.utils.RapidsSQLTestsTrait
 
-class RapidsDateFunctionSuite extends DateFunctionSuite with RapidsSQLTestsTrait {
+class RapidsDateFunctionsSuite extends DateFunctionsSuite with RapidsSQLTestsTrait {
   
 }
