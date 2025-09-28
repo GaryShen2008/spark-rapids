@@ -60,6 +60,7 @@ class RapidsTestSettings extends BackendTestSettings {
     .exclude("Loading a JSON dataset from a text file with SQL", KNOWN_ISSUE("https://github.com/NVIDIA/spark-rapids/issues/10773"))
     .exclude("Loading a JSON dataset from a text file", KNOWN_ISSUE("https://github.com/NVIDIA/spark-rapids/issues/10773"))
   enableSuite[RapidsLiteralExpressionSuite]
+    .exclude("SPARK-37967: Literal.create support ObjectType", WONT_FIX_ISSUE("ObjectType is not supported on GPU"))
   enableSuite[RapidsMathFunctionsSuite]
     .exclude("SPARK-33428 conv function shouldn't raise error if input string is too big", KNOWN_ISSUE("https://github.com/NVIDIA/spark-rapids/issues/11142"))
     .exclude("SPARK-36229 conv should return result equal to -1 in base of toBase", KNOWN_ISSUE("https://github.com/NVIDIA/spark-rapids/issues/11142"))
