@@ -173,6 +173,46 @@ class RapidsTestSettings extends BackendTestSettings {
     .exclude("[SPARK-16818] partition pruned file scans implement sameResult correctly", KNOWN_ISSUE("https://github.com/NVIDIA/cudf-spark/issues/15161"))
   enableSuite[RapidsFileScanSuite]
   enableSuite[RapidsPruneFileSourcePartitionsSuite]
+  enableSuite[RapidsBucketedReadWithoutHiveSupportSuite]
+    .exclude("read bucketed data", ADJUST_UT("Replaced by testRapids version that checks unfiltered bucketed table GPU read correctness."))
+    .exclude("avoid shuffle when join 2 bucketed tables", ADJUST_UT("Replaced by testRapids version that checks compatible bucketed GPU scans feed GpuShuffledSymmetricHashJoinExec without GpuShuffleExchangeExecBase."))
+    .exclude("only shuffle one side when join bucketed table and non-bucketed table", ADJUST_UT("Replaced by testRapids version that checks GpuShuffledSymmetricHashJoinExec and GPU shuffle count."))
+    .exclude("only shuffle one side when 2 bucketed tables have different bucket number", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("only shuffle one side when 2 bucketed tables have different bucket keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("shuffle when join keys are not equal to bucket keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("shuffle when join 2 bucketed tables with bucketing disabled", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("check sort and shuffle when bucket and sort columns are join keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed sort planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("avoid shuffle and sort when sort columns are a super set of join keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed sort planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("only sort one side when sort columns are different", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed sort planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("only sort one side when sort columns are same but their ordering is different", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed sort planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("avoid shuffle when grouping keys are equal to bucket keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU aggregate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("sort should not be introduced when aliases are used", WONT_FIX_ISSUE("Inherited Spark case asserts CPU sort planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("bucket join should work with SubqueryAlias plan", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucketed planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("avoid shuffle when grouping keys are a super-set of bucket keys", WONT_FIX_ISSUE("Inherited Spark case asserts CPU aggregate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("SPARK-17698 Join predicates should not contain filter clauses", WONT_FIX_ISSUE("Inherited Spark case asserts CPU join predicate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("SPARK-19122 Re-order join predicates if they match with the child's output partitioning", WONT_FIX_ISSUE("Inherited Spark case asserts CPU join predicate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("SPARK-19122 No re-ordering should happen if set of join columns != set of child's partitioning columns", WONT_FIX_ISSUE("Inherited Spark case asserts CPU join predicate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("SPARK-22042 ReorderJoinPredicates can break when child's partitioning is not decided", WONT_FIX_ISSUE("Inherited Spark case asserts CPU join predicate planning details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("bucket coalescing is not satisfied", WONT_FIX_ISSUE("Inherited Spark case asserts CPU bucket coalescing rejection details; RAPIDS coverage uses explicit testRapids GPU plan checks."))
+    .exclude("read partitioning bucketed tables with bucket pruning filters", ADJUST_UT("Replaced by testRapids version that checks GPU bucket pruning metadata and final answers."))
+    .exclude("read non-partitioning bucketed tables with bucket pruning filters", ADJUST_UT("Replaced by testRapids version that checks GPU bucket pruning metadata and final answers."))
+    .exclude("read partitioning bucketed tables having null in bucketing key", ADJUST_UT("Replaced by testRapids version that checks GPU bucket pruning metadata and final answers."))
+    .exclude("bucket pruning support IsNaN", ADJUST_UT("Replaced by testRapids version that checks GPU bucket pruning metadata and final answers."))
+    .exclude("read partitioning bucketed tables having composite filters", ADJUST_UT("Replaced by testRapids version that checks GPU bucket pruning metadata and final answers."))
+    .exclude("read bucketed table without filters", ADJUST_UT("Replaced by testRapids version that checks unfiltered bucketed table GPU read correctness."))
+    .exclude("error if there exists any malformed bucket files", ADJUST_UT("Replaced by testRapids version that checks GPU exception wrapping for invalid bucket files."))
+    .exclude("disable bucketing when the output doesn't contain all bucketing columns", ADJUST_UT("Replaced by testRapids version that checks GpuFileSourceScanExec bucketedScan metadata."))
+    .exclude("SPARK-29655 Read bucketed tables obeys spark.sql.shuffle.partitions", ADJUST_UT("Replaced by testRapids version that checks GpuShuffledSymmetricHashJoinExec and GPU shuffle count."))
+    .exclude("SPARK-32767 Bucket join should work if SHUFFLE_PARTITIONS larger than bucket number", ADJUST_UT("Replaced by testRapids version that checks GpuShuffledSymmetricHashJoinExec and GPU shuffle count."))
+    .exclude("bucket coalescing eliminates shuffle", ADJUST_UT("Replaced by testRapids version that checks GPU bucket coalescing metadata and shuffle count."))
+    .exclude("bucket coalescing is applied when join expressions match with partitioning expressions", ADJUST_UT("Replaced by testRapids version that checks GPU bucket coalescing metadata and shuffle count."))
+  enableSuite[RapidsDataSourceScanExecRedactionSuite]
+    .exclude("treeString is redacted", ADJUST_UT("Replaced by testRapids redaction coverage that asserts GpuFileSourceScanExec output."))
+    .exclude("FileSourceScanExec metadata", ADJUST_UT("Replaced by testRapids version that checks GpuFileSourceScanExec metadata."))
+    .exclude("explain is redacted using SQLConf",
+      ADJUST_UT("Replaced by testRapids version that checks GpuFileSourceScanExec redaction."))
+    .exclude("SPARK-31793: FileSourceScanExec metadata should contain limited file paths",
+      ADJUST_UT("Replaced by testRapids version that checks GpuFileSourceScanExec metadata."))
   enableSuite[RapidsDataFrameWindowFunctionsSuite]
     .exclude("Window spill with more than the inMemoryThreshold and spillThreshold", WONT_FIX_ISSUE("GPU implementation doesn't respect the inMemoryThreshold and spillThreshold"))
     .exclude("SPARK-21258: complex object in combination with spilling", WONT_FIX_ISSUE("GPU implementation doesn't respect the inMemoryThreshold and spillThreshold"))
@@ -230,6 +270,13 @@ class RapidsTestSettings extends BackendTestSettings {
   enableSuite[RapidsParquetV1AggregatePushDownSuite]
   enableSuite[RapidsParquetV2AggregatePushDownSuite]
   enableSuite[RapidsParquetColumnIndexSuite]
+  enableSuite[RapidsParquetCodecSuite]
+    .exclude("write and read - file source parquet - codec: none", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source parquet - codec: uncompressed", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source parquet - codec: snappy", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source parquet - codec: gzip", WONT_FIX_ISSUE("GPU Parquet writer path does not cover gzip compression; GPU codec coverage requires GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source parquet - codec: zstd", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source parquet - codec: lz4", WONT_FIX_ISSUE("GPU Parquet reader does not support LZ4-compressed Parquet files."))
   enableSuite[RapidsParquetCompressionCodecPrecedenceSuite]
     .exclude("Create parquet table with compression", KNOWN_ISSUE("https://github.com/NVIDIA/spark-rapids/issues/11416"))
   enableSuite[RapidsParquetDeltaByteArrayEncodingSuite]
@@ -264,6 +311,14 @@ class RapidsTestSettings extends BackendTestSettings {
     .exclude("Read Parquet file generated by parquet-thrift", ADJUST_UT("https://github.com/NVIDIA/spark-rapids/pull/11591"))
   enableSuite[RapidsParquetVectorizedSuite]
   enableSuite[RapidsOrcFilterSuite]
+  enableSuite[RapidsOrcCodecSuite]
+    .exclude("write and read - file source orc - codec: none", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: uncompressed", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: snappy", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: zlib", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: zstd", ADJUST_UT("Replaced by testRapids version that asserts GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: lz4", WONT_FIX_ISSUE("GPU ORC writer path does not cover LZ4 compression; GPU codec coverage requires GpuDataWritingCommandExec and GpuFileSourceScanExec."))
+    .exclude("write and read - file source orc - codec: lzo", WONT_FIX_ISSUE("GPU ORC reader does not support LZO-compressed ORC files."))
   enableSuite[RapidsOrcV1QuerySuite]
     .exclude("SPARK-20728 Make ORCFileFormat configurable between sql/hive and sql/core", WONT_FIX_ISSUE("Inherited Spark check toggles between CPU native/hive ORC implementations; RAPIDS uses the GPU ORC path instead."))
     .exclude("SPARK-34862: Support ORC vectorized reader for nested column", WONT_FIX_ISSUE("CPU ORC vectorized-reader assertion; GPU uses GpuOrcScan rather than Spark CPU vectorized reader flag."))
